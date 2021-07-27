@@ -21,10 +21,10 @@ Route::prefix('auth')->group(function(){
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
 
-    //Route::middleware('auth.jwt')->group(function(){
-    Route::middleware('auth:api')->group(function(){
+    Route::post('refresh', [AuthController::class, 'refresh']);
+    Route::middleware('check.token')->group(function(){
+    //Route::middleware('auth:api')->group(function(){
         Route::post('logout', [AuthController::class, 'logout']);
         Route::post('me', [AuthController::class, 'me']);
-        Route::post('refresh', [AuthController::class, 'refresh']);
     });
 });

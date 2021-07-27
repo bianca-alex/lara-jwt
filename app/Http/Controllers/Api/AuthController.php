@@ -6,15 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Tymon\JWTAuth\Exceptions\TokenBlacklistedException;
 
 class AuthController extends Controller
 {
     //
-    protected $registerAndLogin = true;
 
     public function register(Request $request)
     {
@@ -33,40 +31,32 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
-
-        if($this->registerAndLogin){
-            return $this->login($request);
-        }
-
-        return response()->json($user, 201);
+        $token = auth('api')->fromUser($user);
+        return response()->json(['access_token' => $token], 201);
     } 
 
     public function login(Request $request)
     {
-        if(!$this->registerAndLogin){
-        	$validator = Validator::make($request->all(), [
-            	'email' => 'required|string|email',
-            	'password' => 'required|string|min:2|max:15',
-        	]);
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|string|email',
+           	'password' => 'required|string|min:2|max:15',
+       	]);
 
-      		if($validator->fails()){
-            	return response()->json(['errors' => $validator->errors()], 401);
-        	}
+      	if($validator->fails()){
+            return response()->json(['message' => $validator->errors()], 401);
         }
 
         $credentials = $request->only('email', 'password');
 
-		//if(!$token = JWTAuth::attempt($credentials)){
 		if(!$token = auth('api')->attempt($credentials)){
             return response()->json(['message' => 'Invalid Email or Password'], 401);
         }
 
-        return response()->json(['token' => $token], 200);
+        return response()->json(['access_token' => $token], 200);
     }
 
     public function me(Request $request)
     {
-        //$user = JWTAuth::authenticate($request->token); 
         $user = auth('api')->user();
         return response()->json($user, 200);
     }
@@ -75,7 +65,6 @@ class AuthController extends Controller
     {
 		try{
             auth('api')->logout();
-			//JWTAuth::invalidate($request->token);
 			return response()->json(['message' => 'User logged out successfully']);
 		}catch(JWTException $e){
 			return response()->json(['message' => 'Sorry, the user cannot be logged out'], 500);
@@ -84,8 +73,13 @@ class AuthController extends Controller
 
     public function refresh(Request $request)
     {
-        //$refresh_token = JWTAuth::refresh($request->token);
-        $refresh_token = auth('api')->refresh($request->token);
+        try{
+            $refresh_token = auth('api')->refresh($request->token);
+        }catch(TokenExpiredException $et){
+            return response()->json(['message' => 'Please login again'], 401); 
+        }catch(TokenBlacklistedException $etb){
+            return response()->json(['message' => 'Please login again'], 401); 
+        }
         return response()->json(['refresh_token' => $refresh_token]);
     }
 }
