@@ -22,9 +22,9 @@ Route::prefix('auth')->group(function(){
     Route::post('login', [AuthController::class, 'login']);
 
     //Route::middleware('check.token')->group(function(){
-    Route::post('refresh', [AuthController::class, 'refresh']);
-    Route::middleware('jwt.auth')->group(function(){
+    Route::middleware(['refresh.token', 'jwt.auth'])->group(function(){
         Route::post('logout', [AuthController::class, 'logout']);
         Route::post('me', [AuthController::class, 'me']);
+        Route::post('refresh', [AuthController::class, 'refresh']);
     });
 });

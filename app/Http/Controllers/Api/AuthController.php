@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
 use App\Models\User;
-use Tymon\JWTAuth\Exceptions\TokenExpiredException;
-use Tymon\JWTAuth\Exceptions\TokenBlacklistedException;
+//use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+//use Tymon\JWTAuth\Exceptions\TokenBlacklistedException;
 
 class AuthController extends Controller
 {
@@ -82,6 +82,6 @@ class AuthController extends Controller
             return response()->json(['message' => 'Please login again'], 401); 
         }*/
         $refresh_token = auth('api')->refresh($request->token);
-        return response()->json(['refresh_token' => $refresh_token]);
+        return response()->json(['refresh_token' => $refresh_token], 200);
     }
 }
